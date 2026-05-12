@@ -1,0 +1,35 @@
+name: 编译 dogcom IPK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取编译模板
+        uses: actions/checkout@v4
+
+      - name: 拉取 ImmortalWrt 源码
+        run: |
+          git clone https://github.com/padavanonly/immortalwrt-mt798x-6.6 -b openwrt-24.10-6.6 openwrt
+          cd openwrt
+          # 拉取 dogcom 源码
+          git clone https://github.com/mchome/openwrt-dogcom.git package/openwrt-dogcom
+
+      - name: 更新软件包列表
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: 编译 dogcom
+        run: |
+          cd openwrt
+          make package/openwrt-dogcom/compile V=99
+
+      - name: 上传 IPK 文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: dogcom-ipk
+          path: openwrt/bin/targets/mediatek/filogic/packages/dogcom*.ipk
